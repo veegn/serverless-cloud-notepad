@@ -1,23 +1,44 @@
 import dayjs from 'dayjs'
-import { Router } from 'itty-router'
+import {Router} from 'itty-router'
 import Cookies from 'cookie'
 import jwt from '@tsndr/cloudflare-worker-jwt'
-import { queryNote, MD5, checkAuth, genRandomStr, returnPage, returnJSON, saltPw, getI18n } from './helper'
-import { SECRET } from './constant'
+import {checkAuth, genRandomStr, getI18n, queryNote, returnJSON, returnPage, saltPw} from './helper'
+import {SECRET} from './constant'
 
 // init
 const router = Router()
 
-router.get('/', ({ url }) => {
-    const newHash = genRandomStr(3)
+
+
+router.get('/.create', () => {
+    const newHash = genRandomStr(5)
+    console.log(`Create new note: ${newHash}`)
     // redirect to new page
-    return Response.redirect(`${url}${newHash}`, 302)
+    return new Response(null, {
+        status: 301,
+        headers: {
+            'Location': '/' + newHash + '/edit',
+        }
+    });
 })
 
-router.get('/share/:md5', async (request) => {
+const indexPath = '.index';
+
+router.get('/', async (request) => {
     const lang = getI18n(request)
-    const { md5 } = request.params
-    const path = await SHARE.get(md5)
+    const {value, metadata} = await queryNote(indexPath)
+    // redirect to new page
+    return returnPage('Share', {
+        lang,
+        title: 'Cloud Notepad',
+        content: value,
+        ext: metadata,
+    })
+})
+
+router.get('/:path', async (request) => {
+    const lang = getI18n(request)
+    const { path } = request.params
 
     if (!!path) {
         const { value, metadata } = await queryNote(path)
@@ -33,7 +54,7 @@ router.get('/share/:md5', async (request) => {
     return returnPage('Page404', { lang, title: '404' })
 })
 
-router.get('/:path', async (request) => {
+router.get('/:path/edit', async (request) => {
     const lang = getI18n(request)
 
     const { path } = request.params
@@ -65,7 +86,7 @@ router.get('/:path', async (request) => {
     return returnPage('NeedPasswd', { lang, title })
 })
 
-router.post('/:path/auth', async request => {
+router.post('/:path/edit/auth', async request => {
     const { path } = request.params
     if (request.headers.get('Content-Type') === 'application/json') {
         const { passwd } = await request.json()
@@ -93,7 +114,7 @@ router.post('/:path/auth', async request => {
     return returnJSON(10002, 'Password auth failed!')
 })
 
-router.post('/:path/pw', async request => {
+router.post('/:path/edit/pw', async request => {
     const { path } = request.params
     if (request.headers.get('Content-Type') === 'application/json') {
         const cookie = Cookies.parse(request.headers.get('Cookie') || '')
@@ -128,7 +149,7 @@ router.post('/:path/pw', async request => {
     }
 })
 
-router.post('/:path/setting', async request => {
+router.post('/:path/edit/setting', async request => {
     const { path } = request.params
     if (request.headers.get('Content-Type') === 'application/json') {
         const cookie = Cookies.parse(request.headers.get('Cookie') || '')
@@ -147,14 +168,14 @@ router.post('/:path/setting', async request => {
                     },
                 })
 
-                const md5 = await MD5(path)
+/*                const md5 = await MD5(path)
                 if (share) {
                     await SHARE.put(md5, path)
                     return returnJSON(0, md5)
                 }
                 if (share === false) {
                     await SHARE.delete(md5)
-                }
+                }*/
 
 
                 return returnJSON(0)
@@ -167,7 +188,7 @@ router.post('/:path/setting', async request => {
     }
 })
 
-router.post('/:path', async request => {
+router.post('/:path/edit', async request => {
     const { path } = request.params
     const { value, metadata } = await queryNote(path)
 
