@@ -204,6 +204,7 @@ textarea:focus {
     background: #3a86ff;
     color: white;
     border: none;
+    margin-left: 5px;
 }
 
 .opt-button:hover {

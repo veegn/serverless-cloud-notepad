@@ -91,7 +91,7 @@ window.addEventListener('DOMContentLoaded', function () {
     const $loading = document.querySelector('#loading')
     const $pwBtn = document.querySelector('.opt-pw')
     const $modeBtn = document.querySelector('.opt-mode > input')
-    const $shareBtn = document.querySelector('.opt-share > input')
+    const $shareBtn = document.querySelector('.opt-share')
     const $previewPlain = document.querySelector('#preview-plain')
     const $previewMd = document.querySelector('#preview-md')
     const $shareModal = document.querySelector('.share-modal')
@@ -184,32 +184,13 @@ window.addEventListener('DOMContentLoaded', function () {
 
     if ($shareBtn) {
         $shareBtn.onclick = function (e) {
-            const isShare = e.target.checked
-            const path = window.location.pathname
-            window.fetch(`${path}/setting`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    share: isShare,
-                }),
-            })
-                .then(res => res.json())
-                .then(res => {
-                    if (res.err !== 0) {
-                        return errHandle(res.msg)
-                    }
 
-                    if (isShare) {
-                        const origin = window.location.origin
-                        const url = `${origin}/share/${res.data}`
-                        // show modal
-                        $shareInput.value = url
-                        $shareModal.style.display = 'block'
-                    }
-                })
-                .catch(err => errHandle(err))
+            const path = window.location.pathname
+            const origin = window.location.origin
+            // show modal
+            $shareInput.value = `${origin}` + path.replace("/edit", "")
+            $shareModal.style.display = 'block'
+
         }
     }
 
